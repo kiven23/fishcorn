@@ -14,4 +14,8 @@ io.on('connection', function(socket){
     socket.on('seen', function(req){
         io.emit('seen',req);
     });
+    socket.on('notify', function(req){
+        io.emit('notify',req);
+    });
+ 
 });

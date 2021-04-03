@@ -181,6 +181,32 @@ class HomeController extends Controller
        
        
     public function chatfunction(request $req){
+
+        function detectUTF8($string)
+        {
+            return preg_match('%(?:
+                        [\xC2-\xDF][\x80-\xBF]         
+                        |\xE0[\xA0-\xBF][\x80-\xBF]                
+                        |[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}       
+                        |\xED[\x80-\x9F][\x80-\xBF]             
+                        |\xF0[\x90-\xBF][\x80-\xBF]{2}    
+                        |[\xF1-\xF3][\x80-\xBF]{3}               
+                        |\xF4[\x80-\x8F][\x80-\xBF]{2}    
+                        )+%xs', $string);
+            } 
+
+            if(detectUTF8($req->data['message_body'])){  
+                if(strpbrk($req->data['message_body'],"qwertyuiopasdfghjklzxcvbnm,./;'[]\=-0987654321`~<>?!@#$%^&*()_+{}|:") 
+                  || strpbrk($req->data['message_body'],'"')){
+                     $unicode = 0;
+                }else{
+                     $unicode = 1;
+                }
+            }else{
+                     $unicode = 0;
+            }
+            
+
         date_default_timezone_set('Asia/Manila');
        $msg =   DB::table('message')->insertGetId([
             'conversation_id'=>$req->data['conversation_id'],
@@ -188,11 +214,10 @@ class HomeController extends Controller
             'receiver_id'=>$req->data['receiver_id'],
             'message_body'=>$req->data['message_body'],
             'seen'=>0,
+            'unicode'=>$unicode,
             'created'=> Carbon::now(),
 
         ]);
-        
-        
         $userid = \Auth::user()->id;
         $getreceiver = DB::table('message_map')
        ->where('conversation_id',$req->data['conversation_id'])
@@ -211,9 +236,6 @@ class HomeController extends Controller
        $arr = ['data'=>$chat,
                'receiver_id'=>$getreceiver];       
       return response()->json($arr);
-
-    
- 
 
     }
     public function updateseen(request $req){
@@ -261,15 +283,13 @@ class HomeController extends Controller
         ->get()->first();
         return response()->json($get);
     }
-    public function test(){
-        $test = 'sdsd';
-          if(htmlentities($test)){
-                return "🤓";
-             }else{
-                return "hindi";
-            }
+    public function notify(){
+        $userid = \Auth::user()->id;
+       return $count = DB::table('message')
+       ->where('sender_id',$userid)
+       ->where('seen', 0)
+       ->where('receiver_id', 4)
+       ->count();
     }
-
-
 }
                                                                                  

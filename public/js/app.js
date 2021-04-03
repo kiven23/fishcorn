@@ -2589,6 +2589,13 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -2618,7 +2625,7 @@ vue__WEBPACK_IMPORTED_MODULE_2___default.a.use(vue_infinite_scroll__WEBPACK_IMPO
     return {
       page: 1,
       list: [],
-      message: null,
+      message: [],
       userid: null,
       receiver_id: null,
       messages: [],
@@ -2702,7 +2709,20 @@ vue__WEBPACK_IMPORTED_MODULE_2___default.a.use(vue_infinite_scroll__WEBPACK_IMPO
       }).then(function (res) {
         _this2.$socket.emit("request", res);
 
-        _this2.message = ''; // console.log(res)
+        _this2.message = '';
+
+        _this2.$socket.emit("typings", [{
+          value: 0,
+          token: _this2.$route.params.token,
+          sender: _this2.userid
+        }]);
+
+        _this2.$socket.emit("notify", [{
+          value: 1,
+          token: _this2.$route.params.token,
+          sender: _this2.userid
+        }]); // console.log(res)
+
       });
       this.scroll();
     },
@@ -2792,6 +2812,8 @@ vue__WEBPACK_IMPORTED_MODULE_2___default.a.use(vue_infinite_scroll__WEBPACK_IMPO
         _this7.list.push(res.data.data.data[0]);
 
         if (res.data.data.data[0]["sender_id"] == _this7.userid) {
+          _this7.scroll();
+
           if (res.data.data.data[0]["seen"] == 1) {
             _this7.seen = 1;
           } else {
@@ -2874,13 +2896,20 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
 var axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js")["default"];
 
+var getclientId = [];
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
       filter: null,
-      contacts: []
+      contacts: [],
+      token: null
     };
   },
   methods: {
@@ -2889,7 +2918,13 @@ var axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js")["d
 
       axios.get('http://10.10.10.38:8001/api/chat').then(function (response) {
         _this.contacts = response.data;
-        console.log(response.data);
+      });
+    },
+    getusertoken: function getusertoken() {
+      axios.get('http://10.10.10.38:8001/api/chat/conversation/users').then(function (response) {
+        response.data.filter(function (value, key) {
+          getclientId.push(value.conversationid);
+        });
       });
     },
     createconversation: function createconversation(id) {
@@ -2900,8 +2935,6 @@ var axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js")["d
           id: id
         }
       }).then(function (res) {
-        console.log(res.data.token);
-
         _this2.$router.push({
           name: 'chat',
           params: {
@@ -2911,10 +2944,25 @@ var axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js")["d
       }, function (error) {
         console.log(error);
       });
+    },
+    getnotify: function getnotify() {
+      axios.get('http://10.10.10.38:8001/api/chat/notify/'), then(function (response) {});
     }
   },
   mounted: function mounted() {
     this.getuser();
+    this.getusertoken();
+
+    this.$options.sockets.notify = function (res) {
+      console.log(res);
+      getclientId.filter(function (value, key) {
+        if (value == res[0].token) {
+          alert();
+        } else {
+          console.log('no notify');
+        }
+      });
+    };
   }
 });
 
@@ -46290,44 +46338,66 @@ var render = function() {
               "div",
               { key: $index },
               [
-                _c("h4", [_vm._v("🤓")]),
-                _vm._v(" "),
-                _c(
-                  "q-chat-message",
-                  {
-                    attrs: {
-                      avatar:
-                        _vm.userid == item.sender_id
-                          ? _vm.none
-                          : item.profile_picture,
-                      stamp: "",
-                      sent: _vm.userid == item.sender_id ? true : false,
-                      "text-color":
-                        _vm.userid == item.sender_id ? "white" : false,
-                      "bg-color":
-                        _vm.userid == item.sender_id
-                          ? "primary"
-                          : "light-blue-1 "
-                    }
-                  },
-                  [
-                    _c("p", [_vm._v(_vm._s(item.message_body))]),
-                    _vm._v(" "),
-                    _c(
-                      "q-chip",
+                item.unicode == 1
+                  ? _c(
+                      "q-chat-message",
                       {
-                        attrs: { dense: "", size: "xs", "text-color": "black" }
+                        attrs: {
+                          sent: _vm.userid == item.sender_id ? true : false,
+                          "bg-color":
+                            _vm.userid == item.sender_id ? "cyan-5" : "cyan-5"
+                        }
                       },
                       [
-                        _c("timeago", {
-                          attrs: { datetime: item.created, locale: "en" }
-                        })
+                        item.unicode == 1
+                          ? _c("h4", [_vm._v(_vm._s(item.message_body))])
+                          : _vm._e()
+                      ]
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                item.unicode == 0 || item.unicode == null
+                  ? _c(
+                      "q-chat-message",
+                      {
+                        attrs: {
+                          avatar:
+                            _vm.userid == item.sender_id
+                              ? _vm.none
+                              : item.profile_picture,
+                          stamp: "",
+                          sent: _vm.userid == item.sender_id ? true : false,
+                          "text-color":
+                            _vm.userid == item.sender_id ? "white" : false,
+                          "bg-color":
+                            _vm.userid == item.sender_id
+                              ? "primary"
+                              : "light-blue-1"
+                        }
+                      },
+                      [
+                        _c("p", [_vm._v(_vm._s(item.message_body))]),
+                        _vm._v(" "),
+                        _c(
+                          "q-chip",
+                          {
+                            attrs: {
+                              dense: "",
+                              size: "xs",
+                              "text-color": "black"
+                            }
+                          },
+                          [
+                            _c("timeago", {
+                              attrs: { datetime: item.created, locale: "en" }
+                            })
+                          ],
+                          1
+                        )
                       ],
                       1
                     )
-                  ],
-                  1
-                )
+                  : _vm._e()
               ],
               1
             )
@@ -46520,16 +46590,36 @@ var render = function() {
                     1
                   ),
                   _vm._v(" "),
-                  _c(
-                    "q-item-section",
-                    { attrs: { side: "" } },
-                    [
-                      _c("q-icon", {
-                        attrs: { name: "chat_bubble", color: "green" }
-                      })
-                    ],
-                    1
-                  )
+                  _c("q-item-section", { attrs: { side: "" } }, [
+                    _c(
+                      "div",
+                      { staticClass: "text-h4" },
+                      [
+                        _c(
+                          "q-btn",
+                          {
+                            attrs: {
+                              dense: "",
+                              round: "",
+                              flat: "",
+                              icon: "email"
+                            }
+                          },
+                          [
+                            _c("q-badge", {
+                              attrs: {
+                                color: "red",
+                                floating: "",
+                                transparent: ""
+                              }
+                            })
+                          ],
+                          1
+                        )
+                      ],
+                      1
+                    )
+                  ])
                 ],
                 1
               )

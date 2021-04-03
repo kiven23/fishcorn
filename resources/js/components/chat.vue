@@ -20,7 +20,12 @@
         </q-item-section>
 
         <q-item-section side>
-          <q-icon name="chat_bubble" color="green" />
+            <div class="text-h4">
+            <q-btn dense round flat icon="email">
+              <q-badge color="red" floating transparent></q-badge>
+            </q-btn>
+     
+          </div>
         </q-item-section>
       </q-item>
 
@@ -31,19 +36,31 @@
 </template>
 <script>
 const axios = require('axios').default;
+var getclientId = []
 export default {
   data() {
     return {
       filter: null,
       contacts: [],
+      token: null,
     };
   },
   methods: {
+     
      getuser(){
        axios.get('http://10.10.10.38:8001/api/chat').then((response)=>{
         this.contacts = response.data
-        console.log(response.data)
+       
        })
+      },
+
+     getusertoken(){
+        axios.get('http://10.10.10.38:8001/api/chat/conversation/users').then((response)=>{
+
+           response.data.filter(function(value, key) {
+                getclientId.push(value.conversationid)
+           })
+        })
      },
      createconversation(id){
       axios.post('http://10.10.10.38:8001/api/chat/conversation/create',{
@@ -52,16 +69,31 @@ export default {
         }
       }).then(
         (res)=>{
-          console.log(res.data.token);
-            this.$router.push({name: 'chat', params: { token: res.data.token }});
+          this.$router.push({name: 'chat', params: { token: res.data.token }});
       },(error)=>{
          console.log(error)
       })
       
-     }
+     },
+    getnotify(){
+        axios.get('http://10.10.10.38:8001/api/chat/notify/'),then((response)=>{
+
+        })
+     },
   },
   mounted(){
     this.getuser();
+    this.getusertoken();
+    this.$options.sockets.notify = (res) => {
+      console.log(res)
+         getclientId.filter(function(value, key){
+             if(value == res[0].token){
+               alert()
+             }else{
+               console.log('no notify')
+             }
+         })
+    }
  
   }
 };

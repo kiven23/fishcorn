@@ -152,14 +152,9 @@ export default {
           }
     
           }else{
-             
+
           }
-
            })
- 
- 
-
- 
         };
       });
           

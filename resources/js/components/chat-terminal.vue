@@ -19,13 +19,20 @@
       ></infinite-loading>
 
       <div v-for="(item, $index) in list" :key="$index">
-        <h4>🤓</h4>
+        <q-chat-message
+          :sent="userid == item.sender_id ? true : false"
+          :bg-color="userid == item.sender_id ? 'cyan-5' : 'cyan-5'"
+           v-if="item.unicode == 1"
+          >
+          <h4 v-if="item.unicode == 1">{{item.message_body}}</h4>
+         </q-chat-message>
         <q-chat-message
           :avatar="userid == item.sender_id ? none : item.profile_picture"
           stamp=""
           :sent="userid == item.sender_id ? true : false"
           :text-color="userid == item.sender_id ? 'white' : false"
-          :bg-color="userid == item.sender_id ? 'primary' : 'light-blue-1 '"
+          :bg-color="userid == item.sender_id ? 'primary' : 'light-blue-1'"
+          v-if="item.unicode == 0 || item.unicode == null"
         >
           <p>{{ item.message_body }}</p>
           <q-chip dense size="xs" text-color="black">
@@ -137,7 +144,7 @@ export default {
     return {
       page: 1,
       list: [],
-      message: null,
+      message: [],
       userid: null,
       receiver_id: null,
       messages: [],
@@ -174,7 +181,7 @@ export default {
   methods: {
     onEnterKey(e) {
        
-      
+       
       this.message +=  e
     },
 
@@ -224,6 +231,12 @@ export default {
         .then((res) => {
           this.$socket.emit("request", res);
           this.message = ''
+          this.$socket.emit("typings", [
+          { value: 0, token: this.$route.params.token, sender: this.userid },
+           ]);
+          this.$socket.emit("notify", [
+               { value: 1, token: this.$route.params.token, sender: this.userid },
+           ]);
           // console.log(res)
         });
       this.scroll();
@@ -317,6 +330,7 @@ export default {
         this.list.push(res.data.data.data[0]);
         
         if (res.data.data.data[0]["sender_id"] == this.userid) {
+          this.scroll()
           if (res.data.data.data[0]["seen"] == 1) {
             this.seen = 1;
           } else {
